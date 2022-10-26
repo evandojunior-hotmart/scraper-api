@@ -1,7 +1,13 @@
 # Scraper API
 
 ## To start
-- `yarn install`
-- `yarn dev`
+#### Create a .env file
+```
+API_KEY=SCRAPER_API_KEY
+PORT=8000
+```
+- `yarn install` - to install project dependencies
+- `yarn dev` - to start locally
+
 
 Have fun!
