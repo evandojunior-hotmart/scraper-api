@@ -1,3 +1,5 @@
+import { redisGet, redisSet, redisQuit } from './../common/redis/index';
+import { redisConnect } from '../common/redis/index';
 import axios from 'axios'
 import { Request, Response, Router } from 'express'
 import metascraper from 'metascraper'
@@ -17,15 +19,24 @@ router.get('/scraper', async (_req: Request, res: Response) => {
   })
 
   try {
+    await redisConnect()
+    const scraperCache = await redisGet(url).then((data: string | null) => data)
+
+    if (scraperCache) {
+      await redisQuit()
+      return res.json(JSON.parse(scraperCache))
+    }
+
     const response = await axios.get('https://api.scraperapi.com', { params, responseType: 'arraybuffer' })
-    const metatag = await scraper({ html: response.data, url })
+    const metatagResult = await scraper({ html: response.data, url })
 
-    console.log('metatag=>>', JSON.stringify(metatag));
+    await redisSet(url, JSON.stringify(metatagResult), { 'EX': 60 })
+    await redisQuit()
 
-
-    res.send(JSON.stringify(metatag))
+    return res.json(metatagResult)
   } catch (error) {
     console.log(error)
+    return res.status(500)
   }
 })
 
